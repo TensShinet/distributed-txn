@@ -31,7 +31,6 @@ func (c *Commit) PrepareWrites(txn *mvcc.MvccTxn) (interface{}, error) {
 	// YOUR CODE HERE (lab1).
 	// Check if the commitTs is invalid, the commitTs must be greater than the transaction startTs. If not
 	// report unexpected error.
-	panic("PrepareWrites is not implemented for commit command")
 
 	response := new(kvrpcpb.CommitResponse)
 
@@ -53,7 +52,6 @@ func commitKey(key []byte, commitTs uint64, txn *mvcc.MvccTxn, response interfac
 	}
 
 	// If there is no correspond lock for this transaction.
-	panic("commitKey is not implemented yet")
 	log.Debug("commitKey", zap.Uint64("startTS", txn.StartTS),
 		zap.Uint64("commitTs", commitTs),
 		zap.String("key", hex.EncodeToString(key)))
