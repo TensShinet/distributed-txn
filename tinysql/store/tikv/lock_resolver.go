@@ -159,14 +159,14 @@ func (lr *LockResolver) getResolved(txnID uint64) (TxnStatus, bool) {
 }
 
 // ResolveLocks tries to resolve Locks. The resolving process is in 3 steps:
-// 1) Use the `lockTTL` to pick up all expired locks. Only locks that are too
-//    old are considered orphan locks and will be handled later. If all locks
-//    are expired then all locks will be resolved so the returned `ok` will be
-//    true, otherwise caller should sleep a while before retry.
-// 2) For each lock, query the primary key to get txn(which left the lock)'s
-//    commit status.
-// 3) Send `ResolveLock` cmd to the lock's region to resolve all locks belong to
-//    the same transaction.
+//  1. Use the `lockTTL` to pick up all expired locks. Only locks that are too
+//     old are considered orphan locks and will be handled later. If all locks
+//     are expired then all locks will be resolved so the returned `ok` will be
+//     true, otherwise caller should sleep a while before retry.
+//  2. For each lock, query the primary key to get txn(which left the lock)'s
+//     commit status.
+//  3. Send `ResolveLock` cmd to the lock's region to resolve all locks belong to
+//     the same transaction.
 func (lr *LockResolver) ResolveLocks(bo *Backoffer, callerStartTS uint64, locks []*Lock) (int64, []uint64 /*pushed*/, error) {
 	var msBeforeTxnExpired txnExpireTime
 	if len(locks) == 0 {
@@ -299,7 +299,14 @@ func (lr *LockResolver) getTxnStatus(bo *Backoffer, txnID uint64, primary []byte
 	var req *tikvrpc.Request
 	// build the request
 	// YOUR CODE HERE (lab2).
-	panic("YOUR CODE HERE")
+	// panic("YOUR CODE HERE")
+
+	req = tikvrpc.NewRequest(tikvrpc.CmdCheckTxnStatus, &kvrpcpb.CheckTxnStatusRequest{
+		PrimaryKey: primary,
+		LockTs:     txnID,
+		CurrentTs:  currentTS,
+	}, kvrpcpb.Context{})
+
 	for {
 		loc, err := lr.store.GetRegionCache().LocateKey(bo, primary)
 		if err != nil {
@@ -327,7 +334,12 @@ func (lr *LockResolver) getTxnStatus(bo *Backoffer, txnID uint64, primary []byte
 		logutil.BgLogger().Debug("cmdResp", zap.Bool("nil", cmdResp == nil))
 		// Assign status with response
 		// YOUR CODE HERE (lab2).
-		panic("YOUR CODE HERE")
+		// panic("YOUR CODE HERE")
+		status = TxnStatus{
+			ttl:      cmdResp.LockTtl,
+			commitTS: cmdResp.CommitVersion,
+			action:   cmdResp.Action,
+		}
 		return status, nil
 	}
 }
@@ -350,7 +362,11 @@ func (lr *LockResolver) resolveLock(bo *Backoffer, l *Lock, status TxnStatus, cl
 
 		// build the request
 		// YOUR CODE HERE (lab2).
-		panic("YOUR CODE HERE")
+		// panic("YOUR CODE HERE")
+		req = tikvrpc.NewRequest(tikvrpc.CmdResolveLock, &kvrpcpb.ResolveLockRequest{
+			StartVersion:  l.TxnID,
+			CommitVersion: status.commitTS,
+		})
 
 		resp, err := lr.store.SendReq(bo, req, loc.Region, readTimeoutShort)
 		if err != nil {
